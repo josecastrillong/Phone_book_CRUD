@@ -3,7 +3,12 @@ const morgan = require('morgan');
 
 
 const app = express();
-app.use(morgan('tiny'));
+app.use(express.json())
+morgan.token('body', function(req, res) {
+  return JSON.stringify(req.body);
+});
+
+app.use(morgan(':method :url :status :body - :response-time ms'))
 
 
 
@@ -50,15 +55,8 @@ app.get('/api/persons/:id', (req, res) => {
     } else {
         res.json(phone);
       }
-
 })
 
-// app.delete('/api/persons/:id', (req, res) => {
-//     const id = req.params.id;
-//     const personsVec = persons.filter(person => person.id != id)
-//     // res.send(`User with the id ${id} deleted.`)
-//     res.json(personsVec)
-//   })
 
 app.delete('/api/persons/:id',(req, res)=>{
     const id = req.params.id;
@@ -70,34 +68,28 @@ app.delete('/api/persons/:id',(req, res)=>{
       res.status(404).json({Message: "not found"})
     }
     else{res.json(person)}
-    
-  
   })
 
+  app.post('/api/persons',(req, res)=>{
+    const id = Math.round(Math.random()*10000)
+    const newPerson = {id, ...req.body}
 
+    try{
+      if(newPerson.name.length === 0 || newPerson.number.length === 0){
+        res.status(400).json({Message: "entrada no valida"})
+        throw new SyntaxError("incomplete data");
   
+      }else{
+        console.log(newPerson)
+        persons.push(newPerson)
+        res.status(201).json({Message: "Contacto aregado"})
+      }    
+    } catch(e){
+      console.error(`[ERROR]: this is the error ${e}`)
+    }
 
-  app.post('/api/persons/:name&:number', (req, res) => {
-      const newId = Math.floor(Math.random() * (1000 - 0));
-      const newName = req.params.name;
-      const newNumber = req.params.number;  
-
-      if (newName === undefined || !newNumber === undefined) {
-        res.status(404).json({ error: 'name and phone should be added' });
-      } else if (newName === persons.find((person) => person.name === newName)){
-          res.status(400).json({error: 'repeated name'})
-      } else {
-        persons.push({
-            id: newId,
-            name: newName,
-            number: newNumber
-          })
-          console.log(newName + ' ' + newNumber)
-          res.json(persons)
-      }
-    })
-
-
+    })  
+    
 const port = process.env.PORT || 3001;
 app.listen(port);
 
